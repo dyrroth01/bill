@@ -57,16 +57,27 @@ export async function GET(req: NextRequest) {
   <div class="card">
     <div class="badge">Google Sign-In Setup</div>
     <h1>Connect Google OAuth Credentials</h1>
-    <p>To enable <strong>Sign in with Google</strong>, add your free Google OAuth credentials to your <code>.env</code> file:</p>
-    <ol>
-      <li>Go to the <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color: #4f46e5; font-weight: 600;">Google Cloud Console &rarr; Credentials</a>.</li>
-      <li>Click <strong>Create Credentials &rarr; OAuth client ID</strong> (Application type: <em>Web application</em>).</li>
-      <li>Under <strong>Authorized redirect URIs</strong>, add:<br /><code>${redirectUri}</code></li>
-      <li>Copy your <strong>Client ID</strong> and <strong>Client Secret</strong> into your project's <code>.env</code> file:</li>
-    </ol>
+    <p>You have already registered the redirect URI in Google Cloud. Now your app needs the <strong>Client ID</strong> and <strong>Client Secret</strong> to communicate with Google:</p>
+    
+    <div style="background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 10px; padding: 14px 16px; margin: 16px 0;">
+      <strong style="color: #312e81; font-size: 15px;">🚀 If your app is hosted on Vercel:</strong>
+      <ol style="margin: 8px 0 0 0; padding-left: 20px; font-size: 13.5px;">
+        <li>Open your project at <a href="https://vercel.com/dashboard" target="_blank" style="color: #4f46e5; font-weight: 600;">Vercel Dashboard</a>.</li>
+        <li>Go to <strong>Settings</strong> &rarr; <strong>Environment Variables</strong>.</li>
+        <li>Add <code>GOOGLE_CLIENT_ID</code> (ends in <code>.apps.googleusercontent.com</code>).</li>
+        <li>Add <code>GOOGLE_CLIENT_SECRET</code>.</li>
+        <li>Go to <strong>Deployments</strong>, click the three dots &ldquo;...&rdquo; on the latest deployment, and click <strong>Redeploy</strong>.</li>
+      </ol>
+    </div>
+
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 16px; margin: 16px 0;">
+      <strong style="color: #334155; font-size: 15px;">💻 If running locally (localhost):</strong>
+      <p style="margin: 6px 0 0 0; font-size: 13.5px;">Add them to your local <code>.env</code> file and restart <code>npm run dev</code>.</p>
+    </div>
+
     <pre>GOOGLE_CLIENT_ID="your-google-client-id.apps.googleusercontent.com"
 GOOGLE_CLIENT_SECRET="your-google-client-secret"</pre>
-    <p style="font-size: 13px; color: #64748b; margin-top: 16px;">Once added, restart the dev server and Google Sign-In will work automatically.</p>
+
     <a href="/login" class="btn">&larr; Back to Login</a>
   </div>
 </body>

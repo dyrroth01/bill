@@ -45,3 +45,11 @@ yarn-error.log*
 # typescript build cache & ide scratch
 *.tsbuildinfo
 .zcode/
+
+# test fixtures, security audit & agent files
+test-fixtures/
+text-fixtures/
+sast/
+.agents/
+AGENTS.md
+agent.md

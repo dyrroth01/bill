@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String     @id @default(cuid())
+  name              String
+  email             String     @unique
+  passwordHash      String?
+  googleId          String?    @unique
+  emailVerified     Boolean    @default(false)
+  avatarUrl         String?
+  businessName      String?
+  businessTagline   String?
+  businessAddress   String?
+  businessPhone     String?
+  businessGstin     String?
+  bankName          String?
+  bankAccountNo     String?
+  bankIfsc          String?
+  bankUpiId         String?
+  plan              String     @default("free") // "free" | "pro"
+  planSubscribedAt  DateTime?
+  aiGenerationsUsed Int        @default(0)
+  onboardingDone    Boolean    @default(false)
+  createdAt         DateTime   @default(now())
+  templates         Template[]
+  bills             Bill[]
+  clients           Client[]
+  assets            Asset[]
+}
+
+model Template {
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name             String
+  description      String?
+  sourceType       String   @default("builtin") // ai | import | builtin | blank
+  html             String
+  fieldSchema      String   @default("[]") // JSON: [{ key, label, type }]
+  blocks           String   @default("{}") // JSON: { hasLogo, hasSignature, hasGST, hasBank, hasAmountWords, hasHSN }
+  pageFormat       String   @default("A5") // A4 | A5
+  logoAssetId      String?
+  signatureAssetId String?
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  bills            Bill[]
+}
+
+model Client {
+  id      String @id @default(cuid())
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name    String
+  address String?
+  phone   String?
+  email   String?
+  gstin   String?
+  bills   Bill[]
+}
+
+model Bill {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  templateId    String?
+  template      Template? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  clientId      String?
+  client        Client?   @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  clientName    String    @default("") // snapshot, keeps bills intact if client deleted
+  billNo        String
+  billDate      DateTime
+  dueDate       DateTime?
+  items         String    @default("[]") // JSON: [{ description, hsn, qty, unit, rate, amount }]
+  extra         String    @default("{}") // JSON of custom template fields
+  subtotal      Float     @default(0)
+  cgst          Float     @default(0)
+  sgst          Float     @default(0)
+  igst          Float     @default(0)
+  cgstRate      Float     @default(0)
+  sgstRate      Float     @default(0)
+  igstRate      Float     @default(0)
+  total         Float     @default(0)
+  paidAmount    Float     @default(0)
+  amountInWords String?
+  notes         String?
+  status        String    @default("PENDING") // PAID | PENDING | PARTIAL
+  paymentMode   String? // CASH | UPI | CHEQUE | BANK
+  chequeNo      String?
+  chequeStatus  String? // PENDING | CLEARED | BOUNCED
+  paidAt        DateTime?
+  payments      String    @default("[]") // JSON: [{ id, amount, date, paymentMode, chequeNo, chequeStatus, notes }]
+  templateSnapshot String? // JSON: snapshot of { id, name, html, pageFormat, blocks, fieldSchema, sellerSnapshot, logoUrl, signatureUrl }
+  pdfPath       String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId, status])
+  @@index([userId, billDate])
+}
+
+model Asset {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      String   @default("image") // logo | signature | source | image
+  filePath  String
+  mimeType  String
+  createdAt DateTime @default(now())
+}
+
+model VerificationCode {
+  id        String   @id @default(cuid())
+  email     String
+  code      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}

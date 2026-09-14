@@ -35,6 +35,9 @@ export async function GET(req: NextRequest) {
       );
     }
     const redirectUri = getGoogleOAuthRedirectUri(origin);
+    const hasClientId = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_ID.trim().length > 0);
+    const hasClientSecret = Boolean(process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_CLIENT_SECRET.trim().length > 0);
+
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -57,7 +60,12 @@ export async function GET(req: NextRequest) {
   <div class="card">
     <div class="badge">Google Sign-In Setup</div>
     <h1>Connect Google OAuth Credentials</h1>
-    <p>You have already registered the redirect URI in Google Cloud. Now your app needs the <strong>Client ID</strong> and <strong>Client Secret</strong> to communicate with Google:</p>
+    <div style="background: ${hasClientId && hasClientSecret ? '#f0fdf4' : '#fef2f2'}; border: 1px solid ${hasClientId && hasClientSecret ? '#bbf7d0' : '#fecaca'}; border-radius: 10px; padding: 12px 16px; margin: 16px 0; font-size: 13.5px;">
+      <strong style="color: ${hasClientId && hasClientSecret ? '#166534' : '#991b1b'};">Live Server Variable Status:</strong><br />
+      • <code>GOOGLE_CLIENT_ID</code>: ${hasClientId ? '<span style="color: #15803d; font-weight: bold;">✓ Detected</span>' : '<span style="color: #b91c1c; font-weight: bold;">✗ Not found</span>'}<br />
+      • <code>GOOGLE_CLIENT_SECRET</code>: ${hasClientSecret ? '<span style="color: #15803d; font-weight: bold;">✓ Detected</span>' : '<span style="color: #b91c1c; font-weight: bold;">✗ Not found</span>'}
+    </div>
+    <p>If you recently added these in Vercel Settings, <strong>Vercel requires a Redeploy</strong> to apply them to running serverless instances.</p>
     
     <div style="background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 10px; padding: 14px 16px; margin: 16px 0;">
       <strong style="color: #312e81; font-size: 15px;">🚀 If your app is hosted on Vercel:</strong>

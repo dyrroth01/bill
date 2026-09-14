@@ -99,6 +99,38 @@ async function getBrowser(): Promise<Browser> {
     }
     browserPromise = null;
   }
+
+  const isServerless = Boolean(
+    process.env.VERCEL ||
+    process.env.AWS_LAMBDA_FUNCTION_NAME ||
+    process.env.AWS_REGION ||
+    process.env.LAMBDA_TASK_ROOT
+  );
+
+  if (isServerless) {
+    try {
+      const chromiumModule = await import("@sparticuz/chromium");
+      const chromium = chromiumModule.default || chromiumModule;
+      const puppeteerCore = (await import("puppeteer-core")).default;
+
+      const executablePath = await chromium.executablePath();
+      browserPromise = withTimeout(
+        puppeteerCore.launch({
+          args: chromium.args,
+          defaultViewport: { width: 1280, height: 720 },
+          executablePath,
+          headless: true,
+        }) as unknown as Promise<Browser>,
+        LAUNCH_TIMEOUT_MS,
+        "Starting serverless PDF engine"
+      );
+      return await browserPromise;
+    } catch (err) {
+      console.warn("Serverless Chromium launch failed, attempting local fallback:", err);
+      browserPromise = null;
+    }
+  }
+
   const args = [
     "--disable-dev-shm-usage",
     "--font-render-hinting=none",

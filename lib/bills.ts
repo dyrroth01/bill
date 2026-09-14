@@ -64,3 +64,55 @@ export function monthLabel(key: string): string {
   const [y, m] = key.split("-").map(Number);
   return new Date(y, m - 1, 1).toLocaleString("en-IN", { month: "short" });
 }
+
+export interface ExtractedPayment {
+  amount: number;
+  date: Date;
+  paymentMode?: string;
+  chequeNo?: string;
+  notes?: string;
+}
+
+export function getBillPaymentsList(bill: {
+  payments?: string | null;
+  paidAmount?: number | null;
+  paidAt?: Date | null;
+  billDate?: Date | null;
+  status?: string;
+  total?: number;
+  paymentMode?: string | null;
+  chequeNo?: string | null;
+}): ExtractedPayment[] {
+  try {
+    const parsed = JSON.parse(bill.payments || "[]");
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return parsed
+        .filter((p: any) => Number(p.amount) > 0)
+        .map((p: any) => ({
+          amount: Number(p.amount),
+          date: p.date ? new Date(p.date) : bill.paidAt || bill.billDate || new Date(),
+          paymentMode: p.paymentMode || bill.paymentMode || undefined,
+          chequeNo: p.chequeNo || bill.chequeNo || undefined,
+          notes: p.notes,
+        }));
+    }
+  } catch {}
+
+  const balance = computeBillBalance({
+    total: Number(bill.total) || 0,
+    paidAmount: bill.paidAmount,
+    status: bill.status,
+  });
+  if (balance.paidAmount > 0) {
+    return [
+      {
+        amount: balance.paidAmount,
+        date: bill.paidAt || bill.billDate || new Date(),
+        paymentMode: bill.paymentMode || undefined,
+        chequeNo: bill.chequeNo || undefined,
+      },
+    ];
+  }
+  return [];
+}
+

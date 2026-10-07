@@ -11,19 +11,39 @@ export interface PreparedImage {
 
 const ALLOWED_IMAGE_MIMES = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/gif"];
 
+async function renderPdfPageToBuffer(bytes: Buffer): Promise<Buffer> {
+  const { createCanvas } = await import("@napi-rs/canvas");
+  const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+
+  const loadingTask = pdfjs.getDocument({
+    data: new Uint8Array(bytes),
+    isEvalSupported: false,
+    useSystemFonts: true,
+  });
+
+  const pdfDoc = await loadingTask.promise;
+  if (!pdfDoc.numPages || pdfDoc.numPages < 1) {
+    throw new Error("Could not read any page from the PDF");
+  }
+
+  const page = await pdfDoc.getPage(1);
+  const viewport = page.getViewport({ scale: 2 });
+  const canvas = createCanvas(Math.ceil(viewport.width), Math.ceil(viewport.height));
+  const context = canvas.getContext("2d");
+
+  await page.render({
+    canvasContext: context as any,
+    viewport,
+  }).promise;
+
+  return canvas.toBuffer("image/png");
+}
+
 /** Turns an uploaded bill photo/PDF into an AI-ready image (downscaled JPEG) + original for cropping. */
 export async function prepareSourceImage(bytes: Buffer, mimeType: string): Promise<PreparedImage> {
   let original: Buffer;
   if (mimeType === "application/pdf") {
-    const mod = (await import("pdf-to-img")) as { pdf: (b: Buffer, o?: object) => Promise<AsyncIterable<Uint8Array>> };
-    const doc = await mod.pdf(bytes, { scale: 2 });
-    let first: Uint8Array | null = null;
-    for await (const page of doc) {
-      first = page;
-      break;
-    }
-    if (!first) throw new Error("Could not read any page from the PDF");
-    original = Buffer.from(first);
+    original = await renderPdfPageToBuffer(bytes);
   } else if (ALLOWED_IMAGE_MIMES.includes(mimeType)) {
     original = bytes;
   } else {

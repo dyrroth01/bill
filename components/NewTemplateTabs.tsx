@@ -181,6 +181,9 @@ function AiMakerFlow() {
 
   function reset() {
     setStep("upload");
+    if (imageUrl) {
+      try { URL.revokeObjectURL(imageUrl); } catch {}
+    }
     setImageUrl(null);
     setAnalysis(null);
     setResult(null);
@@ -337,7 +340,13 @@ function AiMakerFlow() {
       <div className="space-y-4">
         <div className="card p-4">
           <div className="mb-3 text-sm font-bold text-slate-900">Source bill</div>
-          {imageUrl && <img src={imageUrl} alt="source bill" className="max-h-80 w-full rounded-lg object-contain" />}
+          {(sourceAssetId ? `/api/assets/${sourceAssetId}` : imageUrl) && (
+            <img
+              src={sourceAssetId ? `/api/assets/${sourceAssetId}` : imageUrl!}
+              alt="source bill"
+              className="max-h-80 w-full rounded-lg object-contain"
+            />
+          )}
         </div>
 
         <div className="card p-4">

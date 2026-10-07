@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
     "sharp",
     "handlebars",
     "mammoth",
-    "pdf-to-img",
+    "pdfjs-dist",
     "@napi-rs/canvas",
   ],
   typescript: { ignoreBuildErrors: false },

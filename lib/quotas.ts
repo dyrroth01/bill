@@ -6,10 +6,29 @@ import { FREE_LIMITS, PRO_LIMITS, type UserUsageInfo } from "./quotas-client";
 
 export * from "./quotas-client";
 
-/** Recursively sum file sizes in uploads/<userId> directory */
+/** Recursively sum file sizes in uploads/<userId> directory and database assets */
 export async function getUserStorageBytes(userId: string): Promise<number> {
-  const userDir = path.join(UPLOAD_ROOT, userId);
   let totalBytes = 0;
+
+  // 1. Account for database-stored data URI assets
+  try {
+    const assets = await db.asset.findMany({
+      where: { userId },
+      select: { filePath: true },
+    });
+    for (const a of assets) {
+      if (a.filePath.startsWith("data:")) {
+        const comma = a.filePath.indexOf(",");
+        const base64Len = comma >= 0 ? a.filePath.length - comma - 1 : a.filePath.length;
+        totalBytes += Math.round((base64Len * 3) / 4);
+      }
+    }
+  } catch {
+    // Non-fatal if DB query fails
+  }
+
+  // 2. Account for disk files if directory exists
+  const userDir = path.join(UPLOAD_ROOT, userId);
 
   async function walk(dir: string) {
     try {
@@ -26,7 +45,7 @@ export async function getUserStorageBytes(userId: string): Promise<number> {
         }
       }
     } catch {
-      // Directory may not exist yet if user hasn't uploaded anything
+      // Directory may not exist yet if user hasn't uploaded anything or on serverless
     }
   }
 

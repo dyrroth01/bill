@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
 
     const bytes = Buffer.from(await file.arrayBuffer());
     const ext = sanitizeExt(extFromMime(file.type || "", file.name));
-    const rel = await saveUpload(user.id, "assets", ext, bytes);
+    const rel = await saveUpload(user.id, "assets", ext, bytes, file.type || undefined);
     const asset = await db.asset.create({
       data: { userId: user.id, kind, filePath: rel, mimeType: file.type || "application/octet-stream" },
     });

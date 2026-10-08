@@ -84,9 +84,10 @@ export async function POST(req: NextRequest) {
 
     // keep the source for later (pass 2 + re-crop)
     const srcExt = mime === "application/pdf" ? "png" : sanitizeExt(extFromMime(mime, file.name));
-    const srcRel = await saveUpload(user.id, "sources", srcExt, prepared.original);
+    const srcMime = mime === "application/pdf" ? "image/png" : mime;
+    const srcRel = await saveUpload(user.id, "sources", srcExt, prepared.original, srcMime);
     const sourceAsset = await db.asset.create({
-      data: { userId: user.id, kind: "source", filePath: srcRel, mimeType: mime === "application/pdf" ? "image/png" : mime },
+      data: { userId: user.id, kind: "source", filePath: srcRel, mimeType: srcMime },
     });
 
     const key = resolveGeminiKey();
@@ -98,7 +99,7 @@ export async function POST(req: NextRequest) {
     if (analysis.flags.hasLogo && analysis.crops?.logo) {
       try {
         const png = await cropNormalized(prepared.original, analysis.crops.logo);
-        const rel = await saveUpload(user.id, "assets", "png", png);
+        const rel = await saveUpload(user.id, "assets", "png", png, "image/png");
         const asset = await db.asset.create({ data: { userId: user.id, kind: "logo", filePath: rel, mimeType: "image/png" } });
         logoAssetId = asset.id;
       } catch (e) {
@@ -108,7 +109,7 @@ export async function POST(req: NextRequest) {
     if (analysis.flags.hasSignature && analysis.crops?.signature) {
       try {
         const png = await cropNormalized(prepared.original, analysis.crops.signature);
-        const rel = await saveUpload(user.id, "assets", "png", png);
+        const rel = await saveUpload(user.id, "assets", "png", png, "image/png");
         const asset = await db.asset.create({ data: { userId: user.id, kind: "signature", filePath: rel, mimeType: "image/png" } });
         signatureAssetId = asset.id;
       } catch (e) {
